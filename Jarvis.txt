@@ -1,0 +1,392 @@
+import pyttsx3 
+import requests 
+from requests.sessions import Request 
+import speech_recognition as sr 
+import datetime 
+import os 
+import random 
+import wikipedia 
+from requests import get 
+import webbrowser 
+import pywhatkit as kit 
+from wikipedia.wikipedia import languages, search 
+import pyjokes 
+import sys 
+import smtplib 
+import speedtest 
+import time 
+import rotatescreen 
+import PyPDF2 
+from tkinter.filedialog import * 
+import pyautogui 
+import psutil 
+from PyQt5 import QtWidgets,QtGui,QtCore,uic 
+from PyQt5.QtWidgets import * 
+from PyQt5.QtCore import QTimer,QTime,QDate,Qt 
+from PyQt5.QtGui import QMovie 
+from PyQt5.QtCore import * 
+from PyQt5.QtGui import * 
+from PyQt5.uic import loadUiType 
+from jarvisui import Ui_MainWindow 
+
+# code 
+engine=pyttsx3.init('sapi5') 
+voices=engine.getProperty('voices') 
+engine.setProperty('voice',voices[1].id) 
+engine.setProperty('rate',170) 
+#text to speech 
+def speak(audio): 
+ engine.say(audio) 
+ print(audio) 
+ engine.runAndWait() 
+#for news 
+def news(): 
+ main_url="http://newsapi.org/v2/topheadlines?sources=techcrunch&apikey="Please enter your API Key" 
+ main_pg=requests.get(main_url).json() 
+ articles=main_pg["articles"] 
+ head=[] 
+ day=['first','second','third','fourth','fifth'] 
+ for ar in articles: 
+ head.append(ar["title"]) 
+ for i in range(len(day)): 
+ speak(f'today\'s {day[i]} news is: {head[i]}') 
+
+#to wish 
+def wish(): 
+ hour=int(datetime.datetime.now().hour) 
+ tt = time.strftime("%I:%M %p") 
+ if(hour>0 and hour<=12): 
+ speak('Good Morning') 
+ speak(f'the current time is: {tt}') 
+ elif hour>12 and hour<18: 
+ speak('Good Afternoon') 
+ speak(f'the current time is: {tt}') 
+ else: 
+ speak('Good Evening') 
+ speak(f'the current time is: {tt}') 
+ speak('Hello sir I am Jarvis how may i help you') 
+
+class mainthread(QThread): 
+ def __init__(self): 
+ super(mainthread,self).__init__() 
+ def run(self): 
+ self.TaskExecution() 
+ # take command from user 
+ def takecommand(self): 
+ r=sr.Recognizer() 
+ with sr.Microphone() as source: 
+ print('Listening...') 
+ r.pause_threshold=2 
+ 
+audio=r.listen(source,timeout=3,phrase_time_limit=5) 
+ try: 
+ print('Recognizing...') 
+ query=r.recognize_google(audio,language='en-in') 
+ print(f'User said: {query}') 
+ except Exception as e: 
+ speak('Say that again please') 
+ return 'none' 
+ return query 
+ #main method 
+ def TaskExecution(self): 
+ wish() 
+ while True: 
+ self.query=self.takecommand().lower() 
+ #logic building 
+ if 'open notepad'in self.query: 
+ path='notepad.exe' 
+ os.startfile(path) 
+ time.sleep(2) 
+ elif 'open paint'in self.query: 
+ npath='mspaint.exe' 
+ os.startfile(npath) 
+ time.sleep(2) 
+ 
+ elif "shut down the system" in self.query: 
+ os.system("shutdown /s /t 5") 
+ time.sleep(4) 
+ elif "restart the system" in self.query: 
+ os.system("shutdown /r /t 5") 
+ time.sleep(4) 
+ elif "take screenshot" in self.query or "take a 
+screenshot" in self.query: 
+ speak("Sir please tell me the name for this 
+screenshot file") 
+ name = self.takecommand().lower() 
+ speak("Sir Please hold the screen for few 
+seconds, i am taking screenshot") 
+ time.sleep(3) 
+ img = pyautogui.screenshot() 
+ img.save(f"{name}.png") 
+ speak("I am done Sir, the screenshot is saved in 
+main folder") 
+ elif "where i am" in self.query or "where we are" in 
+self.query: 
+ speak("Wait Sir, let me check") 
+ try: 
+ ipAdd = 
+requests.get('https://api.ipify.org').text 
+ print(ipAdd) 
+ url = 'https://get.geojs.io/v1/ip/geo/' + 
+ipAdd+'.json' 
+ geo_requests = requests.get(url) 
+ geo_data = geo_requests.json() 
+ city = geo_data['city'] 
+ country = geo_data['country'] 
+ speak(f"Sir i am not sure, but i think we are in 
+city: {city} of country: {country}") 
+ except Exception as e: 
+ speak("Sorry Sir, Due to network issue i am 
+not able to find where we are") 
+ pass 
+ time.sleep(3) 
+ elif 'open command prompt'in self.query: 
+ os.system('start cmd') 
+ time.sleep(2) 
+ elif 'change the volume' in self.query: 
+ speak('choose...') 
+ speak('1)up') 
+ speak('2)down') 
+ speak('3)mute') 
+ n=self.takecommand().lower() 
+ if('up' in n): 
+ pyautogui.press('volumeup') 
+ elif('down'in n): 
+ pyautogui.press('volumedown') 
+ elif('mute'in n): 
+ pyautogui.press('volumemute') 
+ else: 
+ speak('sorry sir, you choice wrong') 
+ time.sleep(2) 
+ 
+ elif 'switch the window' in self.query: 
+ pyautogui.keyDown('alt') 
+ pyautogui.press('tab') 
+ time.sleep(1) 
+ pyautogui.keyUp('alt') 
+ time.sleep(2) 
+ elif 'tell me the news' in self.query: 
+ speak('wait few seconds,fetching the latest news') 
+ news() 
+ time.sleep(1) 
+ elif 'how much battery we have' in self.query: 
+ battery=psutil.sensors_battery() 
+ percentage=battery.percent 
+ speak(f'sir,the battery left is: {percentage}% 
+battery') 
+ time.sleep(1) 
+ if(percentage>=75): 
+ speak('we have enough power to continue your 
+work') 
+ if(percentage<75 and percentage>50): 
+ speak('we should connect the charger') 
+ if(percentage<=50 and percentage>20): 
+ speak('we don\'t have enough power please 
+connect the charger') 
+ if(percentage<=20): 
+ speak('sir please connect the charger first unless 
+it will be shutdown in few minutes') 
+ time.sleep(2) 
+ elif 'read pdf' in self.query: 
+ book=askopenfilename() 
+ pdfReader=PyPDF2.PdfFileReader(book) 
+ pages=pdfReader.numPages 
+ 
+ for num in range(0,pages): 
+ page=pdfReader.getPage(num) 
+ text=page.extractText() 
+ speak(text) 
+ time.sleep(6) 
+ elif 'rotate the screen' in self.query: 
+ screen=rotatescreen.get_primary_display() 
+ for i in range(5): 
+ time.sleep(1) 
+ screen.rotate_to(i*90 % 360) 
+ time.sleep(3) 
+ elif 'How are you' in self.query: 
+ speak('I\'m feeling positively tip top thanks') 
+ time.sleep(1) 
+ elif 'what can you do' in self.query: 
+ speak('i can do like open youtube , play songs , 
+search on google etc... ') 
+ time.sleep(1) 
+ elif 'what is the current date and time' in self.query: 
+ current_time=datetime.datetime.now() 
+ speak(current_time) 
+ time.sleep(1) 
+ elif 'tell me a random joke' in self.query: 
+ 
+my_joke=pyjokes.get_joke(language="en",category="all"
+) 
+ speak(my_joke) 
+ music_dir='D:\\jarvis\\laugh' 
+ songs=os.listdir(music_dir) 
+ rd=random.choice(songs) 
+ os.startfile(os.path.join(music_dir,rd)) 
+ time.sleep(13) 
+ elif 'hello jarvis' in self.query: 
+ speak('hello sir') 
+ time.sleep(2) 
+ elif 'play music' in self.query: 
+ music_dir='D:\\jarvis\\music' 
+ songs=os.listdir(music_dir) 
+ rd=random.choice(songs) 
+ os.startfile(os.path.join(music_dir,rd)) 
+ time.sleep(6) 
+ elif 'what is the weather today' in self.query: 
+ search='weather in gurgaon' 
+ speak('test this page...') 
+ 
+url=f'https://www.google.com//search?q={search}' 
+ webbrowser.open(url) 
+ time.sleep(1) 
+ elif 'test speed of my internet' in self.query: 
+ speak('wait few seconds...') 
+ speed=speedtest.Speedtest() 
+ downloading=speed.download() 
+ correectDown=int(downloading/800000) 
+ uploading=speed.upload() 
+ correctUpload=int(uploading/800000) 
+ speak('select any one') 
+ speak('1-downloading') 
+ speak('2-uploading') 
+ speak('3-both') 
+ cn=self.takecommand().lower() 
+ speak('checking speed...') 
+ if 'downloading' in cn: 
+ speak(f'the downloading sped is: 
+{correectDown} mbps') 
+ time.sleep(1) 
+ elif 'uploading' in cn: 
+ speak(f'the uploading speed is: {correctUpload} 
+mbps') 
+ time.sleep(1) 
+ elif 'both' in cn: 
+ speak(f'the downloading speed is: 
+{correectDown} mbps and the uploading speed is: 
+{correctUpload}mbps') 
+ else: 
+ speak('sorry sir, you choose wrong') 
+ time.sleep(1) 
+ elif 'print ip address' in self.query: 
+ ip=get('https://api.ipify.org').text 
+ speak(f'your IP Address is: {ip}') 
+ time.sleep(1) 
+ elif 'wikipedia' in self.query: 
+ speak('serching wikipedia...') 
+ query=query.replace('wikipedia...',"") 
+ result=wikipedia.summary(query,sentences=5) 
+ speak('according to wikipedia...') 
+ speak(result) 
+ time.sleep(2) 
+ elif 'open youtube' in self.query: 
+ webbrowser.open('www.youtube.com') # to open 
+online 
+ time.sleep(2) 
+ elif 'open gmail' in self.query: 
+ webbrowser.open('www.gmail.com') 
+ time.sleep(2) 
+ elif 'open facebook' in self.query: 
+ webbrowser.open('www.facebook.com') 
+ time.sleep(2) 
+ elif 'open instagram' in self.query: 
+ webbrowser.open('www.instagram.com') 
+ time.sleep(2) 
+ elif 'open google' in self.query: 
+ webbrowser.open('www.google.com') 
+ time.sleep(2) 
+ elif 'open stack overflow' in self.query: 
+ webbrowser.open('www.stackoverflow.com') 
+ time.sleep(2) 
+ elif 'open geeks for geeks' in self.query: 
+ webbrowser.open('www.GeeksforGeeks.com') 
+ time.sleep(2) 
+ 
+ elif 'search on google' in self.query: 
+ speak('sir, what should i search on google') 
+ cm=self.takecommand().lower() 
+ webbrowser.open(f'{cm}') 
+ time.sleep(2) 
+ 
+ elif 'search on youtube' in self.query: 
+ speak('sir,what should I search') 
+ cn=self.takecommand().lower() 
+ kit.playonyt(cn) 
+ time.sleep(2) 
+ 
+ elif 'play online game' in self.query: 
+ speak('select one among these') 
+ speak('1-tic tac toe') 
+ speak('2-sudoku') 
+ speak('3- 8 ball pool') 
+ speak('4-crossword puzzle') 
+ speak('5-subway surfer') 
+ speak('6-temple run 2') 
+ speak('7-2048 puzzle') 
+ 
+ cn=self.takecommand().lower() 
+ if 'tic tac toe' in cn: 
+ webbrowser.open('https://playtictactoe.org/') 
+ time.sleep(3) 
+ elif 'sudoku' in cn: 
+ webbrowser.open('https://sudoku.com/') 
+ time.sleep(3) 
+ elif '8 ball pool' in cn: 
+ 
+webbrowser.open('https://www.arkadium.com/games/fr
+ee-8-ball-pool/') 
+ time.sleep(3) 
+ elif 'crossword puzzle' in cn: 
+ 
+webbrowser.open('https://www.arkadium.com/games/d
+aily-crossword/') 
+ time.sleep(3) 
+ elif 'subway surfer' in cn: 
+ 
+webbrowser.open('https://poki.com/en/g/subwaysurfers') 
+ time.sleep(3) 
+ elif 'temple run 2' in cn: 
+ 
+webbrowser.open('https://poki.com/en/g/temple-run2') 
+ time.sleep(3) 
+ elif '2048 puzzle' in cn: 
+ webbrowser.open('https://2048game.com/') 
+ else: 
+ speak('sorry sir, you choose wrong') 
+ time.sleep(3) 
+ 
+ elif 'play song on youtube' in self.query: 
+ speak('sir,which song I search') 
+ cn=self.takecommand().lower() 
+ kit.playonyt(cn) 
+ time.sleep(3) 
+ elif 'no thanks' in self.query: 
+ speak('thanks for using me sir have a great day') 
+ sys.exit() 
+ speak('sir,do you have any other work') 
+startexecution=mainthread() 
+class Main(QMainWindow): 
+ def __init__(self): 
+ super().__init__() 
+ self.ui=Ui_MainWindow() 
+ self.ui.setupUi(self) 
+ self.ui.pushButton.clicked.connect(self.startTask) 
+ self.ui.pushButton_2.clicked.connect(self.close) 
+ def startTask(self): 
+ 
+self.ui.movie=QtGui.QMovie("../../../Downloads/000e6c6
+17f2eac48021d0ae1cf95eb6c.gif") 
+ self.ui.label.setMovie(self.ui.movie) 
+ self.ui.movie.start() 
+ timer=QTimer(self) 
+ timer.timeout.connect(self.showtime) 
+ timer.start(1000) 
+ startexecution.start() 
+ def showtime(self): 
+ current_time=QTime.currentTime() 
+ label_time=current_time.toString('hh:mm:ss') 
+ self.ui.textBrowser.setText(label_time) 
+app=QApplication(sys.argv) 
+JARVIS=Main() 
+JARVIS.show() 
+exit(app.exec_())
